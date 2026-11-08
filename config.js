@@ -27,4 +27,9 @@ window.JETTY_CONFIG = {
   ],
 
   signOff: 'Yours faithfully,',
+
+  // Cloud backup (Firebase). Paste the web app config from the Firebase console here.
+  // Leave as null to turn backup off. These values are not secret; access is
+  // protected by the Firestore rules in firestore.rules.
+  firebase: null,
 };

@@ -168,6 +168,19 @@
     saveDraft();
   });
 
+  // ---- Saved lists (closing lines, signers): kept locally and backed up ----
+  const Sync = window.JettySync;
+  function setList(key, value) {
+    store.set(key, value);
+    store.set('listsUpdatedAt', Date.now());
+    pushLists();
+  }
+  const pushLists = () => Sync.saveLists({
+    closings: store.get('closings', []),
+    signatories: store.get('signatories', []),
+    updatedAt: store.get('listsUpdatedAt', 0),
+  });
+
   // ---- Closing line dropdown ----------------------------------------------
   const savedClosings = () => store.get('closings', []);
   const allClosings = () => [...CFG.defaultClosings, ...savedClosings().filter((c) => !CFG.defaultClosings.includes(c))];
@@ -198,7 +211,7 @@
   $('closingCustom').addEventListener('input', (e) => { letter.closing = e.target.value; saveDraft(); });
   $('btnRemoveClosing').addEventListener('click', () => {
     if (!confirm('Remove this closing line from the list?')) return;
-    store.set('closings', savedClosings().filter((c) => c !== letter.closing));
+    setList('closings', savedClosings().filter((c) => c !== letter.closing));
     letter.closing = CFG.defaultClosings[0];
     renderClosing();
     saveDraft();
@@ -247,7 +260,7 @@
   }));
   $('btnRemoveSignatory').addEventListener('click', () => {
     if (!confirm(`Remove ${letter.signatory.name} from the list?`)) return;
-    store.set('signatories', savedSigs().filter((s) => !sameSig(s, letter.signatory)));
+    setList('signatories', savedSigs().filter((s) => !sameSig(s, letter.signatory)));
     letter.signatory = { ...CFG.defaultSignatories[0] };
     renderSignatory();
     saveDraft();
@@ -256,10 +269,10 @@
   // Custom names/closings are remembered once a letter is made with them.
   function rememberCustomChoices() {
     const c = (letter.closing || '').trim();
-    if (c && !allClosings().includes(c)) store.set('closings', [...savedClosings(), c]);
+    if (c && !allClosings().includes(c)) setList('closings', [...savedClosings(), c]);
     const s = letter.signatory;
     if (s?.name?.trim() && !allSigs().some((x) => sameSig(x, s))) {
-      store.set('signatories', [...savedSigs(), { name: s.name.trim(), title: (s.title || '').trim() }]);
+      setList('signatories', [...savedSigs(), { name: s.name.trim(), title: (s.title || '').trim() }]);
     }
     sigCustomMode = false;
     renderClosing();
@@ -345,6 +358,7 @@
 
   $('btnPreview').addEventListener('click', async () => {
     if (!check()) return;
+    addToHistory();
     const M = CFG.margins;
     const page = $('previewPage');
     page.style.backgroundImage = `url("${CFG.letterheadImage}")`;
@@ -359,10 +373,13 @@
   });
   window.addEventListener('resize', () => { if ($('previewDlg').open) fitPreview(); });
 
+  const HISTORY_MAX = 500;
   function addToHistory() {
+    const entry = { ...JSON.parse(JSON.stringify(letter)), savedAt: Date.now() };
     const hist = store.get('history', []).filter((h) => h.id !== letter.id);
-    hist.unshift({ ...JSON.parse(JSON.stringify(letter)), savedAt: Date.now() });
-    store.set('history', hist.slice(0, 100));
+    hist.unshift(entry);
+    store.set('history', hist.slice(0, HISTORY_MAX));
+    Sync.saveLetter(entry);
   }
 
   function downloadBlob(blob, name) {
@@ -420,9 +437,9 @@
         <button type="button" class="btn outline" data-copy="${i}">Copy</button>
         <button type="button" class="item-del" data-remove="${i}" aria-label="Delete">✕</button>
       </li>`).join('')
-      : '<li class="empty">Letters you share or save will appear here.</li>';
+      : '<li class="empty">Letters you preview, share or save will appear here.</li>';
   }
-  $('btnHistory').addEventListener('click', () => { renderHistory(); $('historyDlg').showModal(); });
+  $('btnHistory').addEventListener('click', () => { renderHistory(); renderSync(); $('historyDlg').showModal(); });
   $('historyList').addEventListener('click', (e) => {
     const hist = store.get('history', []);
     const open = e.target.closest('[data-open]');
@@ -440,8 +457,11 @@
       toast(copy ? 'Copied — edit it and create a new letter' : 'Letter opened for editing');
     } else if (remove) {
       if (!confirm('Delete this letter from the list?')) return;
-      hist.splice(Number(remove.dataset.remove), 1);
+      const [gone] = hist.splice(Number(remove.dataset.remove), 1);
       store.set('history', hist);
+      const at = Date.now();
+      store.set('deleted', { ...store.get('deleted', {}), [gone.id]: at });
+      Sync.deleteLetter(gone.id, at);
       renderHistory();
     }
   });
@@ -458,6 +478,102 @@
   // ---- Dialog close buttons ----------------------------------------------
   document.querySelectorAll('[data-close]').forEach((b) =>
     b.addEventListener('click', () => b.closest('dialog').close()));
+
+  // ---- Backup across devices (see sync.js) --------------------------------
+  // Last change wins, by savedAt. Deleted letters are kept as small "tombstones".
+  function mergeRemoteLetters(docs) {
+    const byId = new Map(store.get('history', []).map((h) => [h.id, h]));
+    const deleted = store.get('deleted', {});
+    const remote = new Map(docs.map((d) => [d.id, d]));
+    let changed = false;
+
+    for (const d of docs) {
+      const local = byId.get(d.id);
+      if (d.deleted) {
+        if (local && (local.savedAt || 0) <= d.savedAt) { byId.delete(d.id); changed = true; }
+        if (!deleted[d.id]) { deleted[d.id] = d.savedAt; changed = true; }
+      } else if ((deleted[d.id] || 0) >= d.savedAt) {
+        Sync.deleteLetter(d.id, deleted[d.id]); // deleted here while signed out
+      } else if (!local || (local.savedAt || 0) < d.savedAt) {
+        byId.set(d.id, d);
+        changed = true;
+      }
+    }
+    // Upload anything this device has that the backup lacks or has older.
+    for (const h of byId.values()) {
+      const r = remote.get(h.id);
+      if (!r || (!r.deleted && (r.savedAt || 0) < (h.savedAt || 0))) Sync.saveLetter(h);
+    }
+    for (const [id, at] of Object.entries(deleted)) {
+      if (!remote.has(id)) Sync.deleteLetter(id, at);
+    }
+    if (changed) {
+      const hist = [...byId.values()].sort((a, b) => (b.savedAt || 0) - (a.savedAt || 0)).slice(0, HISTORY_MAX);
+      store.set('history', hist);
+      store.set('deleted', deleted);
+      if ($('historyDlg').open) renderHistory();
+    }
+  }
+
+  function mergeRemoteLists(data) {
+    const localAt = store.get('listsUpdatedAt', 0);
+    if (data && (data.updatedAt || 0) > localAt) {
+      store.set('closings', data.closings || []);
+      store.set('signatories', data.signatories || []);
+      store.set('listsUpdatedAt', data.updatedAt);
+      renderClosing();
+      renderSignatory();
+    } else if (!data || localAt > (data.updatedAt || 0)) {
+      pushLists();
+    }
+  }
+
+  function renderSync(st = Sync.status()) {
+    const bar = $('syncBar');
+    bar.hidden = st.state === 'unavailable';
+    if (bar.hidden) return;
+    const btn = $('btnSync');
+    btn.hidden = false;
+    bar.className = 'syncbar ' + st.state;
+    if (st.state === 'signed-in') {
+      $('syncText').innerHTML = `<strong>✓ Backup is on</strong><br>Signed in as ${esc(st.email)}. These letters appear on every device signed in to this account.`
+        + (st.online ? '' : '<br><em>No internet now. Changes will back up when you are online.</em>');
+      btn.textContent = 'Sign out';
+    } else if (st.state === 'signed-out') {
+      $('syncText').innerHTML = '<strong>Backup is off</strong><br>Sign in with Google to see your letters on your phone, tablet and computer.';
+      btn.textContent = 'Turn on backup';
+    } else if (st.state === 'loading') {
+      $('syncText').textContent = 'Checking backup…';
+      btn.hidden = true;
+    } else {
+      $('syncText').textContent = st.error || 'Backup is not working right now.';
+      btn.textContent = 'Try again';
+    }
+  }
+
+  $('btnSync').addEventListener('click', async (e) => {
+    const st = Sync.status();
+    e.currentTarget.disabled = true;
+    try {
+      if (st.state === 'signed-in') {
+        if (confirm('Sign out of backup on this device?\nYour letters stay here, but new ones will not be backed up.')) await Sync.signOut();
+      } else if (st.state === 'error') {
+        location.reload();
+      } else {
+        if (!navigator.onLine) { toast('Connect to the internet to turn on backup'); return; }
+        await Sync.signIn();
+        if (Sync.status().state === 'signed-in') toast('Backup is on');
+      }
+    } catch (err) {
+      console.error(err);
+      toast('Could not sign in. Please try again.');
+    } finally {
+      e.currentTarget.disabled = false;
+    }
+  });
+
+  Sync.onStatus(renderSync);
+  Sync.connect({ onLetters: mergeRemoteLetters, onLists: mergeRemoteLists });
 
   // ---- Start ---------------------------------------------------------------
   renderAll();

@@ -171,6 +171,18 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); }
 .page .lt-closing { margin-bottom: 7mm; }
 .page .lt-sign { margin-top: 15mm; font-weight: 700; }
 
+/* Backup status (Past letters) */
+.syncbar {
+  display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap;
+  margin: 16px 16px 0; padding: 14px; border-radius: 12px; font-size: 15px;
+  background: #fff4dc; border: 1.5px solid #f0c66b;
+}
+.syncbar[hidden] { display: none; }
+.syncbar.signed-in { background: #e8f4ec; border-color: #9fd0ae; }
+.syncbar.error { background: #fdecea; border-color: #f0a9a3; }
+.syncbar.signed-in .btn { background: #fff; color: var(--brand); border-color: var(--brand); }
+.syncbar > div { flex: 1 1 200px; }
+
 /* History list */
 .history { list-style: none; margin: 0; padding: 16px; overflow: auto; flex: 1; }
 .history li {

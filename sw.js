@@ -1,6 +1,6 @@
 // Offline support: serve everything from the cache, refresh it in the background.
 // Bump CACHE when files are renamed or removed.
-const CACHE = 'jetty-letters-v2';
+const CACHE = 'jetty-letters-v3';
 const ASSETS = [
   './',
   'index.html',
@@ -8,10 +8,14 @@ const ASSETS = [
   'config.js',
   'pdf.js',
   'app.js',
+  'sync.js',
   'manifest.webmanifest',
   'assets/brand/letterhead.jpg',
   'vendor/jspdf.umd.min.js',
   'vendor/jspdf.plugin.autotable.min.js',
+  'vendor/firebase-app-compat.js',
+  'vendor/firebase-auth-compat.js',
+  'vendor/firebase-firestore-compat.js',
   'assets/fonts/NotoSans-Regular.ttf',
   'assets/fonts/NotoSans-Bold.ttf',
   'assets/icons/icon-192.png',
