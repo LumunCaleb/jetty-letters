@@ -31,5 +31,12 @@ window.JETTY_CONFIG = {
   // Cloud backup (Firebase). Paste the web app config from the Firebase console here.
   // Leave as null to turn backup off. These values are not secret; access is
   // protected by the Firestore rules in firestore.rules.
-  firebase: null,
+  firebase: {
+    apiKey: 'AIzaSyA6cAobHzNKpNciE4ZDSw1JPTIuZtqaZtA',
+    authDomain: 'jetty-letters.firebaseapp.com',
+    projectId: 'jetty-letters',
+    storageBucket: 'jetty-letters.firebasestorage.app',
+    messagingSenderId: '925861685137',
+    appId: '1:925861685137:web:eca13f16d3376a69cb1c30',
+  },
 };
