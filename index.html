@@ -1,0 +1,138 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+  <meta name="theme-color" content="#0f3d6e">
+  <title>Jetty Letters</title>
+  <link rel="manifest" href="manifest.webmanifest">
+  <link rel="icon" href="assets/icons/icon-192.png">
+  <link rel="apple-touch-icon" href="assets/icons/icon-192.png">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <header class="topbar">
+    <div class="brand"><img src="assets/icons/icon-192.png" alt=""><span>Jetty Letters</span></div>
+    <div class="top-actions">
+      <button type="button" id="btnHistory" class="btn ghost">Past letters</button>
+      <button type="button" id="btnNew" class="btn ghost">New letter</button>
+    </div>
+  </header>
+
+  <main id="form">
+    <section class="card">
+      <h2><span class="step">1</span>Letter details</h2>
+      <div class="grid2">
+        <label>Date
+          <input type="date" id="date">
+        </label>
+        <label>Our reference <small>(optional)</small>
+          <input id="ref" autocomplete="off" placeholder="e.g. JP/QT/2026/014">
+        </label>
+      </div>
+      <label>To (name or company)
+        <input id="recipientName" autocomplete="off" placeholder="e.g. The Managing Director, ABC Ltd">
+      </label>
+      <label>Address
+        <textarea id="recipientAddress" rows="3" placeholder="Street&#10;Town, State"></textarea>
+      </label>
+      <label>Greeting
+        <input id="salutation" autocomplete="off">
+      </label>
+      <label>Subject
+        <input id="subject" autocomplete="off" placeholder="e.g. Quotation for painting of office building">
+      </label>
+      <label>Opening paragraph
+        <textarea id="intro" rows="4" placeholder="e.g. We are pleased to forward our quotation for the above as follows:"></textarea>
+      </label>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">2</span>Items &amp; prices</h2>
+      <div class="field-label">Currency</div>
+      <div class="segmented" id="currency" role="radiogroup" aria-label="Currency">
+        <button type="button" role="radio" data-cur="NGN">₦ Naira</button>
+        <button type="button" role="radio" data-cur="USD">$ Dollar</button>
+        <button type="button" role="radio" data-cur="EUR">€ Euro</button>
+      </div>
+
+      <div id="items"></div>
+      <button type="button" id="btnAddItem" class="btn outline wide">+ Add another item</button>
+
+      <div class="totals">
+        <div class="trow"><span>Subtotal</span><strong id="tSub">0.00</strong></div>
+        <div class="trow">
+          <label for="tax" class="inline">Tax</label>
+          <select id="tax">
+            <option value="0">No tax</option>
+            <option value="7.5">VAT 7.5%</option>
+          </select>
+        </div>
+        <div class="trow" id="taxRow" hidden><span id="tTaxLabel">VAT (7.5%)</span><strong id="tTax">0.00</strong></div>
+        <div class="trow grand"><span>Grand total</span><strong id="tGrand">0.00</strong></div>
+        <div class="words" id="tWords"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <h2><span class="step">3</span>Closing &amp; signature</h2>
+      <label>Closing line
+        <select id="closingSelect"></select>
+      </label>
+      <div id="closingCustomWrap" hidden>
+        <label>Your own closing line
+          <textarea id="closingCustom" rows="2" placeholder="Type your closing line"></textarea>
+        </label>
+      </div>
+      <button type="button" id="btnRemoveClosing" class="linkbtn" hidden>Remove this line from the list</button>
+
+      <label>Signed by
+        <select id="signatorySelect"></select>
+      </label>
+      <div id="signatoryCustomWrap" class="grid2" hidden>
+        <label>Full name
+          <input id="sigName" autocomplete="off" placeholder="e.g. Engr. John Doe">
+        </label>
+        <label>Position <small>(optional)</small>
+          <input id="sigTitle" autocomplete="off" placeholder="e.g. Project Manager">
+        </label>
+      </div>
+      <button type="button" id="btnRemoveSignatory" class="linkbtn" hidden>Remove this name from the list</button>
+    </section>
+  </main>
+
+  <footer class="actionbar">
+    <button type="button" id="btnPreview" class="btn primary wide big">Preview letter</button>
+  </footer>
+
+  <dialog id="previewDlg" class="sheet">
+    <div class="sheet-head">
+      <button type="button" class="btn ghost" data-close>← Back to edit</button>
+      <strong>Preview</strong>
+      <span></span>
+    </div>
+    <div class="preview-scroll"><div id="previewPage" class="page"></div></div>
+    <div class="sheet-actions">
+      <button type="button" id="btnShare" class="btn primary big">Share (WhatsApp, Email…)</button>
+      <button type="button" id="btnDownload" class="btn outline big">Save PDF</button>
+    </div>
+  </dialog>
+
+  <dialog id="historyDlg" class="sheet">
+    <div class="sheet-head">
+      <button type="button" class="btn ghost" data-close>← Back</button>
+      <strong>Past letters</strong>
+      <span></span>
+    </div>
+    <ul id="historyList" class="history"></ul>
+  </dialog>
+
+  <div id="toast" role="status" aria-live="polite"></div>
+
+  <script src="vendor/jspdf.umd.min.js"></script>
+  <script src="vendor/jspdf.plugin.autotable.min.js"></script>
+  <script src="config.js"></script>
+  <script src="pdf.js"></script>
+  <script src="app.js"></script>
+</body>
+</html>
