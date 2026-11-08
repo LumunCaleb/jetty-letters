@@ -58,3 +58,10 @@ One-time setup (already done if `firebase` in `config.js` is filled in):
 3. **Authentication → Settings → Authorized domains → Add domain**: `lumuncaleb.github.io`
 4. **Build → Firestore Database → Create database**: choose a location (e.g. `europe-west1`) and **production mode**. Then open the **Rules** tab, paste the contents of `firestore.rules`, and click **Publish**.
 5. **Project settings (⚙) → General → Your apps → Web (</>)**: register the app as "Jetty Letters" (no hosting needed) and copy the `firebaseConfig` values into `firebase:` in `config.js`. Then commit and push.
+
+### About the Firebase API key in `config.js`
+Firebase web API keys are public by design; the letters are protected by `firestore.rules` and Google sign-in. The key is also restricted in Google Cloud (APIs & Services → Credentials → "Browser key (auto created by Firebase)"):
+- **Websites:** `https://lumuncaleb.github.io/*`, `https://jetty-letters.firebaseapp.com/*`, `http://localhost:8765/*`
+- **APIs:** Cloud Firestore API, Identity Toolkit API, Token Service API
+
+If the app moves to a new web address, add it there **and** under Firebase → Authentication → Settings → Authorized domains, or sign-in and backup will stop working. GitHub's secret-scanning alert for this key was closed as "won't fix" for this reason.
