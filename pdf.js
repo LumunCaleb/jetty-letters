@@ -157,11 +157,11 @@
       const lines = doc.splitTextToSize(upper ? text.toUpperCase() : text, CW);
       for (const ln of lines) {
         ensure(lh);
-        const x = align === 'right' ? PW - M.right : M.left;
+        const x = align === 'right' ? PW - M.right : align === 'center' ? M.left + CW / 2 : M.left;
         doc.text(ln, x, y, { align, baseline: 'top' });
         if (underline && ln.trim()) {
           const w = doc.getTextWidth(ln);
-          const ux = align === 'right' ? x - w : x;
+          const ux = align === 'right' ? x - w : align === 'center' ? x - w / 2 : x;
           doc.setLineWidth(0.3);
           doc.line(ux, y + size * 0.3528 * 1.15, ux + w, y + size * 0.3528 * 1.15);
         }
@@ -184,7 +184,7 @@
 
     write(letter.salutation);
     gap(4);
-    write(letter.subject, { bold: true, underline: true, upper: true });
+    write(letter.subject, { bold: true, underline: true, upper: true, align: 'center' });
     gap(4);
     if (letter.intro) { write(letter.intro); gap(5); }
 

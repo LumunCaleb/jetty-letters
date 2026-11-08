@@ -157,7 +157,7 @@ dialog::backdrop { background: rgba(0, 0, 0, .4); }
 .page p { margin: 0; white-space: pre-wrap; }
 .page .lt-top { display: flex; justify-content: space-between; margin-bottom: 6mm; }
 .page .lt-to { margin-bottom: 6mm; }
-.page .lt-subject { font-weight: 700; text-transform: uppercase; text-decoration: underline; margin: 4mm 0; }
+.page .lt-subject { font-weight: 700; text-transform: uppercase; text-decoration: underline; margin: 4mm 0; text-align: center; }
 .page .lt-intro { margin-bottom: 5mm; }
 .page table { width: 100%; border-collapse: collapse; font-size: 10pt; margin-bottom: 7mm; }
 .page th { color: #fff; text-align: left; padding: 2mm; }
