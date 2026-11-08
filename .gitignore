@@ -1,3 +1,9 @@
 .DS_Store
 .claude/
 __pycache__/
+tools/video/shots/
+tools/video/out/
+tools/video/chrome-prof/
+tools/video/*.mp4
+tools/video/*.pdf
+tools/video/*.png
