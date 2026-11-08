@@ -2,6 +2,8 @@
 
 An offline web app (PWA) for writing quotations and letters on the Jetty letterhead and sharing them as PDFs.
 
+**Live app:** https://lumuncaleb.github.io/jetty-letters/
+
 No build step: it's plain HTML, CSS and JS. Everything runs and is stored on the device (`localStorage`); nothing is sent to a server.
 
 ## Project layout
@@ -35,7 +37,12 @@ python3 -m http.server 8765
 ```
 Then open http://localhost:8765.
 
-## Put it online (free) and install on the phone
-Upload the folder to any static host, for example Netlify Drop (drag the folder onto https://app.netlify.com/drop), GitHub Pages or Vercel. It must be served over **https** for offline mode and installation to work.
+## Publishing updates
+The app is hosted on GitHub Pages from the `main` branch. To publish a change:
+```bash
+git add -A && git commit -m "Describe the change" && git push
+```
+GitHub rebuilds the site in a minute or two. Installed copies fetch the new files in the background and show them the next time the app is opened. If you rename or remove files, also bump `CACHE` in `sw.js`.
 
-On the Android phone or tablet, open the link in **Chrome**, then tap ⋮ → **Add to Home screen / Install app**. After that first visit it works without internet.
+## Installing on the phone or tablet
+Open https://lumuncaleb.github.io/jetty-letters/ in **Chrome**, then tap ⋮ → **Add to Home screen / Install app**. After that first visit it works without internet.
